@@ -42,6 +42,7 @@ obj-y   +=  rtc/
 endif
 obj-y   +=  ccci/
 obj-y   +=  dual_ccci/
+#obj-y   +=  eccci/
 
 ifeq ($(CONFIG_MTK_EEMCS_DEVICES), y)
 obj-y   +=  eemcs/
@@ -127,9 +128,9 @@ endif
 
 obj-y += conn_md/
 
-#ifeq ($(MTK_NFC_SUPPORT),yes)
-#obj-y	+= nfc/
-#endif
+ifeq ($(MTK_NFC_SUPPORT),yes)
+obj-y	+= nfc/
+endif
 
 #ifeq ($(CONFIG_MTK_WIFI),m)
 #obj-y   +=  conn_soc/

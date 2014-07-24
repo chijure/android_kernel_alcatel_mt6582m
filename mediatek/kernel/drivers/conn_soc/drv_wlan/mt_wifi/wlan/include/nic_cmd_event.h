@@ -1338,9 +1338,9 @@ typedef struct _CMD_SET_BSS_INFO {
     UINT_8  ucEncStatus;
     UINT_8  ucPhyTypeSet;
     UINT_8  aucOwnMac[6];
-    UINT_8  fgWapiMode;
-    UINT_8  fgIsApMode;
-    UINT_8  fgHiddenSsidMode;
+	UINT_8  fgWapiMode;
+	UINT_8  fgIsApMode;
+    UINT_8  aucRsv[1];
     CMD_SET_BSS_RLM_PARAM_T rBssRlmParam;
 } CMD_SET_BSS_INFO, *P_CMD_SET_BSS_INFO;
 

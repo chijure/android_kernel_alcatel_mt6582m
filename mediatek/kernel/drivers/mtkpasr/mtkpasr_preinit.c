@@ -3,7 +3,8 @@
 #include <linux/memory.h>
 #include <linux/printk.h>
 
-#define CONFIG_MTKPASR_MINDIESIZE		(0x10000000)	/* 256MB */
+//#define CONFIG_MTKPASR_MINDIESIZE		(0x10000000)	/* 256MB */
+#define CONFIG_MTKPASR_MINDIESIZE		(0x20000000)	/* 512MB */
 #define MTKPASR_LESSRESTRICT_PFNS		(0x40000)	/* 1GB */
 
 /* Per-RANK Size (In bytes. From SW view) */

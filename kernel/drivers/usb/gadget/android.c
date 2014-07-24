@@ -79,8 +79,13 @@ static const char longname[] = "Gadget Android";
 #define PRODUCT_ID		0x0001
 
 /* Default manufacturer and product string , overridden by userspace */
+#if defined (CUSTOM_WIKO_VERSION)
+#define MANUFACTURER_STRING "HIGHWAY"
+#define PRODUCT_STRING "HIGHWAY"
+#else
 #define MANUFACTURER_STRING "MediaTek"
 #define PRODUCT_STRING "MT65xx Android Phone"
+#endif
 
 #define USB_LOG "USB"
 

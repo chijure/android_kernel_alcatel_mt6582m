@@ -217,9 +217,12 @@
 #define A5142MIPI_SENSOR_ID                     0x4800
 #define GC0313MIPI_YUV_SENSOR_ID                0xD0
 #define IMX135_SENSOR_ID                        0x0135  
-#define OV16825MIPI_SENSOR_ID                       0x0168
 
-#define GC2035_SENSOR_ID			0x2035
+#define IMX136_SENSOR_ID                        0x0136
+#define IMX179_SENSOR_ID                        0x0179
+#define IMX178_SENSOR_ID                        0x0178
+#define OV16825MIPI_SENSOR_ID					          0x0168
+#define OV16826MIPI_SENSOR_ID					          0x0169
 /* CAMERA DRIVER NAME */
 #define CAMERA_HW_DEVNAME            "kd_camera_hw"
 
@@ -288,8 +291,11 @@
 #define SENSOR_DRVNAME_S5K3H2YX_MIPI_RAW   "s5k3h2yxmipiraw"
 #define SENSOR_DRVNAME_SP0A19_YUV   "sp0a19yuv"
 #define SENSOR_DRVNAME_IMX135_MIPI_RAW   "imx135mipiraw"
-#define SENSOR_DRVNAME_GC0313MIPI_YUV      "gc0313mipiyuv"
-#define SENSOR_DRVNAME_OV16825_MIPI_RAW   "OV16825mipiraw"
+#define SENSOR_DRVNAME_IMX136_MIPI_RAW   "imx136mipiraw"
+#define SENSOR_DRVNAME_IMX179_MIPI_RAW   "imx179mipiraw"
+#define SENSOR_DRVNAME_IMX178_MIPI_RAW   "imx178mipiraw"
+#define SENSOR_DRVNAME_OV16825_MIPI_RAW  "ov16825mipiraw"
+#define SENSOR_DRVNAME_OV16826_MIPI_RAW  "ov16826mipiraw"
 /*******************************************************************************
 *
 ********************************************************************************/

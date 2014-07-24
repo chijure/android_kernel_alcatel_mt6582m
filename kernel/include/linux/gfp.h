@@ -166,12 +166,6 @@ static inline int allocflags_to_migratetype(gfp_t gfp_flags)
 	if (unlikely(page_group_by_mobility_disabled))
 		return MIGRATE_UNMOVABLE;
 
-#ifdef CONFIG_MTKPASR
-	/* This is the mobility for MTKPASR-imposed pages */
-	if (gfp_flags & GFP_MTKPASR_HIGHUSER)
-		return MIGRATE_MTKPASR; 
-#endif
-
 	/* Group based on mobility */
 	return (((gfp_flags & __GFP_MOVABLE) != 0) << 1) |
 		((gfp_flags & __GFP_RECLAIMABLE) != 0);

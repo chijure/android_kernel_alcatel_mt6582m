@@ -214,6 +214,3 @@ allow vold device:file { write getattr open };
 # e2fsck for encryption
 allow vold rootfs:file execute;
 allow vold rootfs:file execute_no_trans;
-
-# superumount for encryption
-allow vold superumount_exec:file { read execute open execute_no_trans getattr};

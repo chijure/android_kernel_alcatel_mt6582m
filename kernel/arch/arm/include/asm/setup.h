@@ -167,7 +167,14 @@ struct tag_mdinfo_data{
 	u8 md_type[4];
 };
 
-
+#ifdef SUPPORT_TINNO_BATTERY_COMPENSATE	   
+//add by alik
+#define ATAG_BATTERY       0x41000808
+struct tag_battery {
+        u32 bat_voltage;
+};
+//add end
+#endif
 
 #define ATAG_DDR_DFSINFO_DATA 0x41000700
 struct tag_ddr_dfs_info_data{
@@ -197,6 +204,11 @@ struct tag {
 		 */
 		struct tag_memclk	memclk;
                 struct tag_boot         boot;
+#ifdef SUPPORT_TINNO_BATTERY_COMPENSATE	   
+		//add by alik			   
+		 struct tag_battery         battery;	
+		//add end		
+#endif		
                 struct tag_meta_com     meta_com;
                 struct tag_devinfo_data devinfo_data;
                 tag_dfo_boot     dfo_data;

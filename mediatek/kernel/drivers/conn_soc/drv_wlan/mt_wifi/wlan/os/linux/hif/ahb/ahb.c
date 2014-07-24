@@ -1079,8 +1079,7 @@ kalDevPortRead (
     if ((WlanDmaFatalErr == 1) || (fgIsResetting == TRUE) ||
 		(HifIsFwOwn(GlueInfo->prAdapter) == TRUE))
     {
-//#ifdef CONF_HIF_CONNSYS_DBG
-#if 0
+#ifdef CONF_HIF_CONNSYS_DBG
         if (WlanDmaFatalErr == 1)
         {
             /* dump information every 20 times */
@@ -1372,8 +1371,7 @@ kalDevPortWrite (
     if ((WlanDmaFatalErr == 1) || (fgIsResetting == TRUE) ||
 		(HifIsFwOwn(GlueInfo->prAdapter) == TRUE))
     {
-//#if (CONF_HIF_CONNSYS_DBG == 1)
-#if 0
+#if (CONF_HIF_CONNSYS_DBG == 1)
         if (WlanDmaFatalErr == 1)
         {
             /* dump information every 20 times */

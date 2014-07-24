@@ -1056,7 +1056,7 @@ static int mtkfb_set_overlay_layer(struct fb_info *info, struct fb_overlay_layer
 
     MMProfileLogEx(MTKFB_MMP_Events.SetOverlayLayer, MMProfileFlagStart, (id<<24)|(enable<<16)|layerInfo->next_buff_idx, (unsigned int)layerInfo->src_phy_addr);
 
-    MTKFB_LOG("L%d set_overlay:%d,%d\n", layerInfo->layer_id, layerInfo->layer_enable, layerInfo->next_buff_idx);
+    MTKFB_LOG_D("L%d set_overlay:%d,%d\n", layerInfo->layer_id, layerInfo->layer_enable, layerInfo->next_buff_idx);
 
     // Update Layer Enable Bits and Layer Config Dirty Bits
     if ((((fbdev->layer_enable >> id) & 1) ^ enable)) {
@@ -1087,7 +1087,7 @@ static int mtkfb_set_overlay_layer(struct fb_info *info, struct fb_overlay_layer
         //so clean up thread will clean them all!
         if(temp[id].buff_idx != max_buf_index_setted[id])
         {
-            MTKFB_LOG("mtkfb update fence from %d to %d",temp[id].buff_idx,max_buf_index_setted[id]);
+            MTKFB_LOG_D("mtkfb update fence from %d to %d",temp[id].buff_idx,max_buf_index_setted[id]);
             temp[id].buff_idx = max_buf_index_setted[id];
         }
         ret = 0;
@@ -1689,7 +1689,7 @@ static int mtkfb_ioctl(struct file *file, struct fb_info *info, unsigned int cmd
     case MTKFB_SET_OVERLAY_LAYER:
     {
         struct fb_overlay_layer layerInfo;
-        MTKFB_LOG(" mtkfb_ioctl():MTKFB_SET_OVERLAY_LAYER\n");
+        MTKFB_LOG_D(" mtkfb_ioctl():MTKFB_SET_OVERLAY_LAYER\n");
 
         if (copy_from_user(&layerInfo, (void __user *)arg, sizeof(layerInfo))) {
             MTKFB_LOG("[FB]: copy_from_user failed! line:%d \n", __LINE__);
@@ -1809,11 +1809,9 @@ static int mtkfb_ioctl(struct file *file, struct fb_info *info, unsigned int cmd
 				{
 					MTKFB_ERR("in early suspend layer(0x%x),idx(%d)!\n", layerId<<16|layerInfo[i].layer_enable, layerInfo[i].next_buff_idx);
 					//mtkfb_release_layer_fence(layerInfo[i].layer_id);
-                    disp_sync_release(layerInfo[i].layer_id);
-                }else {
-                    mtkfb_set_overlay_layer(info, &layerInfo[i], true);
-                }
-            }
+				}
+    			mtkfb_set_overlay_layer(info, &layerInfo[i], true);
+    		}
     		mutex_unlock(&OverlaySettingMutex);
     		if (DISP_IsDecoupleMode()) {
             	DISP_StartOverlayTransfer();
@@ -2173,10 +2171,7 @@ static int mtkfb_fbinfo_init(struct fb_info *info)
     info->screen_base = (char *) fbdev->fb_va_base;
     info->screen_size = fbdev->fb_size_in_byte;
     info->pseudo_palette = fbdev->pseudo_palette;
-    if(!DISP_IsDecoupleMode())
-    {
-        cached_layer_config[FB_LAYER].alpha = 0xFF;
-    }
+
     r = fb_alloc_cmap(&info->cmap, 16, 0);
     if (r != 0)
         PRNERR("unable to allocate color map memory\n");
@@ -2470,7 +2465,28 @@ static void mtkfb_fb_565_to_888(void* fb_va)
         s += (ALIGN_TO(xres, disphal_get_fb_alignment()) - xres);
     }
 }
+#ifdef SUPPORT_TINNO_LCD_TEST
+//Added by changgui.chen - TINNO
+static ssize_t lcd_power_control_func(struct device *dev, struct device_attribute *attr, const char *buf, ssize_t count)
+{
+    int on_off;
 
+    sscanf(buf, "%d", &on_off);
+
+    if(on_off) {
+        mtkfb_late_resume(0);
+       mt65xx_leds_brightness_set(MT65XX_LED_TYPE_LCD,127);
+        printk("Bring up LCD.\n");
+    } else {
+        mtkfb_early_suspend(0);
+        printk("Shutdown LCD.\n");
+    }
+
+    return count;
+}
+static DEVICE_ATTR(lcd_on_off, 0777, NULL, lcd_power_control_func);
+//Added end
+#endif
 #if defined(DFO_USE_NEW_API)
 #if 1
 extern int dfo_query(const char *s, unsigned long *v);
@@ -2792,6 +2808,12 @@ static int mtkfb_probe(struct device *dev)
 		}
     }
 #endif
+
+#ifdef SUPPORT_TINNO_LCD_TEST
+   //Added by changgui.chen - TINNO
+   	device_create_file(dev, &dev_attr_lcd_on_off);
+   //Added end
+#endif   
     MSG_FUNC_LEAVE();
     return 0;
 
@@ -2833,7 +2855,7 @@ bool mtkfb_is_suspend(void)
 }
 EXPORT_SYMBOL(mtkfb_is_suspend);
 
-static void mtkfb_shutdown(struct device *pdev)
+ void mtkfb_shutdown(struct device *pdev)
 {
     MTKFB_LOG("[FB Driver] mtkfb_shutdown()\n");
 #if defined(CONFIG_MTK_LEDS)
@@ -2873,6 +2895,8 @@ static void mtkfb_shutdown(struct device *pdev)
     MTKFB_LOG("[FB Driver] leave mtkfb_shutdown\n");
 }
 
+EXPORT_SYMBOL(mtkfb_shutdown);		//lcd test 9121
+
 void mtkfb_clear_lcm(void)
 {
 	int i;
@@ -2906,81 +2930,6 @@ void mtkfb_clear_lcm(void)
     atomic_set(&OverlaySettingDirtyFlag, 1);
     atomic_set(&OverlaySettingApplied, 0);
     mutex_unlock(&OverlaySettingMutex);
-}
-int hdmi_disc_disp_path(void)
-{
-    printk("[FB Driver] enter hdmi_disc_disp_path \n");
-
-    if (is_early_suspended) {
-        printk("hdmi_disc_disp_path suspended %d \n", __LINE__);
-        return 0;
-    }
-
-    is_early_suspended = TRUE;
-
-    disphal_prepare_suspend();
-    if (wait_event_interruptible_timeout(disp_done_wq, !disp_running, HZ/10) == 0)
-    {
-        printk("[FB Driver] Wait disp finished timeout in early_suspend\n");
-    }
-
-#ifdef MTK_FB_SYNC_SUPPORT
-    int i = 0;
-    for(i=0; i<HW_OVERLAY_COUNT; i++)
-    {
-        disp_sync_release(i);
-        if (!((i == DISP_DEFAULT_UI_LAYER_ID) && isAEEEnabled)) 
-        {
-            cached_layer_config[i].layer_en = 0;
-            cached_layer_config[i].isDirty = 0;
-        }
-        printk("[FB Driver] layer%d release fences\n",i);		
-    }
-#endif
-    DISP_CHECK_RET(DISP_PanelEnable(FALSE));
-    DISP_CHECK_RET(DISP_PowerEnable(FALSE));
-
-    DISP_CHECK_RET(DISP_PauseVsync(TRUE));
-    disp_hdmi_path_clock_off("mtkfb");
-    printk("[FB Driver] hdmi_disc_disp_path\n");
-	return 0;
-}
-
-int hdmi_conn_disp_path(void)
-{
-    printk("[FB Driver] enter hdmi_conn_disp_path\n");
- 
-    if (is_ipoh_bootup)
-    {
-        atomic_set(&OverlaySettingDirtyFlag, 0);
-        is_video_mode_running = true;
-    }
-    else
-    {
-        disp_hdmi_path_clock_on("mtkfb");
-    }
-    printk("[FB LR] 1\n");
-    DISP_CHECK_RET(DISP_PauseVsync(FALSE));
-    printk("[FB LR] 2\n");
-    DISP_CHECK_RET(DISP_PowerEnable(TRUE));
-    printk("[FB LR] 3\n");
-    DISP_CHECK_RET(DISP_PanelEnable(TRUE));
-    printk("[FB LR] 4\n");
-    
-    is_early_suspended = FALSE;
-    
-    if (is_ipoh_bootup)
-    {
-        DISP_StartConfigUpdate();
-    }
-    else
-    {
-        mtkfb_clear_lcm();
-    }
-
-    printk("[FB Driver] hdmi_conn_disp_path\n");
-
-	return 0;
 }
 
 

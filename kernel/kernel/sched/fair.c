@@ -3803,7 +3803,7 @@ select_task_rq_fair(struct task_struct *p, int sd_flag, int wake_flags)
 
 		if(cpus!=0){
 			for_each_cpu(j, cpus){
-				if (idle_cpu(j))
+				if ( 0 == cpu_rq(j)->nr_running)
 					idle_cnt++;
 			}
 		}
@@ -3853,32 +3853,20 @@ select_task_rq_fair(struct task_struct *p, int sd_flag, int wake_flags)
 
 	if (-1 != max_clid) {
 		if (!in_prev) {
-			int j;
 			struct cpumask *cpus;
 			cpus = get_domain_cpus(max_clid, 1);
 			check_cpus(1, max_clid, cpus);
 			cpu = cpumask_any(cpus);	
-			for_each_cpu(j, cpus){
-				if (idle_cpu(j)) {
-					cpu = j;
-					break;
-				}
-			}
+
 			mt_sched_printf("wakeup %d %s cpu=%d, max_clid=%d",
 				p->pid, p->comm, cpu, max_clid); 
 		}
 	}else if( -1 != max_idle_clid){
-		int j;
 		struct cpumask *cpus;
 		cpus = get_domain_cpus(max_idle_clid, 1);
 		check_cpus(2, max_idle_clid, cpus);
 		cpu = cpumask_any(cpus);
-		for_each_cpu(j, cpus){
-			if (idle_cpu(j)){
-				cpu = j;
-				break;
-			}
-		}
+
 		mt_sched_printf("wakeup %d %s cpu=%d, max_idle_clid=%d",
 			p->pid, p->comm, cpu, max_idle_clid);
 	}
@@ -4713,7 +4701,7 @@ static int move_tasks_tg(struct lb_env *env)
 		    	   (src_tginfo->nr_running > dst_tginfo->nr_running)){
 				mt_sched_printf("hit ruleA: bypass pid=%d comm=%s src:nr_running=%ld nr_cpus=%ld dst:nr_running=%ld", 
 				p->pid, p->comm, src_tginfo->nr_running, src_nr_cpus, dst_tginfo->nr_running);
-				goto next;
+				continue;
 			}
 #endif
 

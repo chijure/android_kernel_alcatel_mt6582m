@@ -18,6 +18,7 @@
 #include <linux/highmem.h>
 #include <linux/suspend.h>
 #include <asm/cacheflush.h>
+#include <mach/wd_api.h>
 
 #include "mtkpasr_drv.h"
 
@@ -226,6 +227,14 @@ extern void mtkpasr_reset_state(void);
 /* Hook to Linux PM */
 void mtkpasr_phaseone_ops(void)
 {		
+	struct wd_api *wd_api = NULL;
+
+	/* To restart wdt */
+	if (get_wd_api(&wd_api) == 0) {
+		mtkpasr_log("PASR kicks WDT!\n");
+		wd_api->wd_restart(WD_TYPE_NORMAL);
+	}
+
 	IS_MTKPASR_ENABLED_NORV;
 	
 	/* It means no need to apply this op (Simply for paging or other periodic wakeups) */

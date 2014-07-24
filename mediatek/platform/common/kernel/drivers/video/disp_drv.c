@@ -365,7 +365,7 @@ static void _DISP_ConfigMemWriteDatapath (disp_path_config_dirty *dirty_flag) {
 			    _DISP_DumpLayer(&captured_layer_config[i]);
 				disp_path_config_layer(&captured_layer_config[i]);
         		MMProfileLogEx(MTKFB_MMP_Events.ConfigOVL, MMProfileFlagEnd, 0, 0);
-                DISP_LOG("L%d config hw:%d,%d\n", captured_layer_config[i].layer, captured_layer_config[i].layer_en, captured_layer_config[i].buff_idx);
+                DISP_LOG_D("L%d config hw:%d,%d\n", captured_layer_config[i].layer, captured_layer_config[i].layer_en, captured_layer_config[i].buff_idx);
 			}
 		}
 		struct disp_path_config_mem_out_struct config;
@@ -1889,7 +1889,7 @@ static int _DISP_ConfigDlinkDatapath (disp_path_config_dirty *dirty_flag, struct
 				_DISP_DumpLayer(&captured_layer_config[i]);
 
 				disp_path_config_layer(&captured_layer_config[i]);
-				DISP_LOG("L%d config hw:%d,%d\n", captured_layer_config[i].layer, captured_layer_config[i].layer_en, captured_layer_config[i].buff_idx);
+				DISP_LOG_D("L%d config hw:%d,%d\n", captured_layer_config[i].layer, captured_layer_config[i].layer_en, captured_layer_config[i].buff_idx);
 			}
 		}
 		//  Strart: BW hint for SMI -------------------------------------------------
@@ -2958,6 +2958,8 @@ unsigned long DISP_GetLCMIndex(void)
 
 DISP_STATUS DISP_PrepareSuspend(void)
 {
+    lcm_drv->earlysuspendsharp();	 //lcd test 9121
+    
     disphal_prepare_suspend();
     return DISP_STATUS_OK;
 }

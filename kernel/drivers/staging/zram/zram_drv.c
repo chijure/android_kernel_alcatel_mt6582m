@@ -323,8 +323,16 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
 
 	handle = zs_malloc(meta->mem_pool, clen);
 	if (!handle) {
-		pr_info("Error allocating memory for compressed "
-			"page: %u, size=%zu\n", index, clen);
+#ifdef CONFIG_MTKPASR
+		if (unlikely(current->flags & PF_MTKPASR)) {
+			/* No warning during suspend PASR stage */
+		} else {
+#endif
+			pr_info("Error allocating memory for compressed "
+				"page: %u, size=%zu\n", index, clen);
+#ifdef CONFIG_MTKPASR
+		}
+#endif
 		ret = -ENOMEM;
 		goto out;
 	}

@@ -1,3 +1,38 @@
+# Copyright Statement:
+#
+# This software/firmware and related documentation ("MediaTek Software") are
+# protected under relevant copyright laws. The information contained herein
+# is confidential and proprietary to MediaTek Inc. and/or its licensors.
+# Without the prior written permission of MediaTek inc. and/or its licensors,
+# any reproduction, modification, use or disclosure of MediaTek Software,
+# and information contained herein, in whole or in part, shall be strictly prohibited.
+#
+# MediaTek Inc. (C) 2010. All rights reserved.
+#
+# BY OPENING THIS FILE, RECEIVER HEREBY UNEQUIVOCALLY ACKNOWLEDGES AND AGREES
+# THAT THE SOFTWARE/FIRMWARE AND ITS DOCUMENTATIONS ("MEDIATEK SOFTWARE")
+# RECEIVED FROM MEDIATEK AND/OR ITS REPRESENTATIVES ARE PROVIDED TO RECEIVER ON
+# AN "AS-IS" BASIS ONLY. MEDIATEK EXPRESSLY DISCLAIMS ANY AND ALL WARRANTIES,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NONINFRINGEMENT.
+# NEITHER DOES MEDIATEK PROVIDE ANY WARRANTY WHATSOEVER WITH RESPECT TO THE
+# SOFTWARE OF ANY THIRD PARTY WHICH MAY BE USED BY, INCORPORATED IN, OR
+# SUPPLIED WITH THE MEDIATEK SOFTWARE, AND RECEIVER AGREES TO LOOK ONLY TO SUCH
+# THIRD PARTY FOR ANY WARRANTY CLAIM RELATING THERETO. RECEIVER EXPRESSLY ACKNOWLEDGES
+# THAT IT IS RECEIVER'S SOLE RESPONSIBILITY TO OBTAIN FROM ANY THIRD PARTY ALL PROPER LICENSES
+# CONTAINED IN MEDIATEK SOFTWARE. MEDIATEK SHALL ALSO NOT BE RESPONSIBLE FOR ANY MEDIATEK
+# SOFTWARE RELEASES MADE TO RECEIVER'S SPECIFICATION OR TO CONFORM TO A PARTICULAR
+# STANDARD OR OPEN FORUM. RECEIVER'S SOLE AND EXCLUSIVE REMEDY AND MEDIATEK'S ENTIRE AND
+# CUMULATIVE LIABILITY WITH RESPECT TO THE MEDIATEK SOFTWARE RELEASED HEREUNDER WILL BE,
+# AT MEDIATEK'S OPTION, TO REVISE OR REPLACE THE MEDIATEK SOFTWARE AT ISSUE,
+# OR REFUND ANY SOFTWARE LICENSE FEES OR SERVICE CHARGE PAID BY RECEIVER TO
+# MEDIATEK FOR SUCH MEDIATEK SOFTWARE AT ISSUE.
+#
+# The following software/firmware and/or related documentation ("MediaTek Software")
+# have been modified by MediaTek Inc. All revisions are subject to any receiver's
+# applicable license agreements with MediaTek Inc.
+
+
 # *************************************************************************
 # Set shell align with Android build system
 # *************************************************************************
@@ -46,7 +81,6 @@ export KERNEL_SOURCE
          update-api modem-info bindergen clean-modem check-seandroid
 
 S_MODULE_LOG  =  $(OUT_DIR)/target/product/$(PROJECT)_$(CUR_MODULE).log
-S_CLEAN_LOG = $(MKTOPDIR)/$(PROJECT)_$(CUR_MODULE).log
 S_CODEGEN_LOG =  $(OUT_DIR)/target/product/$(PROJECT)_codegen.log
 CODEGEN_LOG   =  $(LOGDIR)/$(PROJECT)_codegen.log
 MODULE_LOG    =  $(LOGDIR)/$(PROJECT)_$(CUR_MODULE).log
@@ -151,7 +185,6 @@ SHOWTIME      =  $(shell $(SHOWTIMECMD))
 ifeq ($(ENABLE_TEE), TRUE)
   DEAL_STDOUT := 2>&1 | tee -a $(MODULE_LOG)
   DEAL_STDOUT_CODEGEN := 2>&1 | tee -a $(CODEGEN_LOG)
-  DEAL_STDOUT_CLEAN := 2>&1 | tee -a $(S_CLEAN_LOG)
   DEAL_STDOUT_BTCODEGEN := 2>&1 | tee -a $(LOG)btcodegen.log
   DEAL_STDOUT_CUSTGEN := 2>&1 | tee -a $(LOG)custgen.log
   DEAL_STDOUT_EMIGEN := 2>&1 | tee -a $(LOG)emigen.log
@@ -177,7 +210,6 @@ ifeq ($(ENABLE_TEE), TRUE)
 else
   DEAL_STDOUT  := >> $(MODULE_LOG) 2>&1
   DEAL_STDOUT_CODEGEN  := > $(CODEGEN_LOG) 2>&1
-  DEAL_STDOUT_CLEAN := > $(S_CLEAN_LOG) 2>&1
   DEAL_STDOUT_BTCODEGEN  := > $(LOG)btcodegen.log 2>&1
   DEAL_STDOUT_CUSTGEN := > $(LOG)custgen.log 2>&1
   DEAL_STDOUT_EMIGEN := > $(LOG)emigen.log 2>&1
@@ -265,11 +297,7 @@ export MTK_KERNEL_MODULES_SKIP_IN_ANDROID := yes
 export MTK_KERNEL_MODULES_SKIP_IN_ANDROID :=
   endif
 endif
-ifneq ($(filter newall remake%,$(MAKECMDGOALS)),)
-  ifeq ($(MAKELEVEL),0)
-export MTK_SKIP_KERNEL_IN_ANDROID := yes
-  endif
-endif
+
 # Warning: If a pregen's output is used for custgen, it must be put here instead of module build
 # Warning: Be care of ANDROID_NATIVE_TARGETS, they will not trigger pregen or custgen
 ifeq ($(BUILD_PRELOADER),yes)
@@ -286,7 +314,7 @@ endif
   MTK_DEPENDENCY_PRECLEAN_BEFORE_LK      := $(filter %/rules.mk %/rules_platform.mk,$(mtk-custom-files))
 endif
 ifeq ($(BUILD_KERNEL),yes)
-  MTK_DEPENDENCY_PREGEN_BEFORE_KERNEL    := nandgen ptgen drvgen
+  MTK_DEPENDENCY_PREGEN_BEFORE_KERNEL    := nandgen ptgen codegen
 ifeq ($(LEGACY_DFO_GEN), yes)
   MTK_DEPENDENCY_PREGEN_BEFORE_KERNEL    += $(if $(filter yes,$(strip $(KBUILD_OUTPUT_SUPPORT))),$(MTK_ROOT_OUT)/KERNEL_OBJ,$(KERNEL_WD))/include/mach/dfo_boot.h \
                                             $(if $(filter yes,$(strip $(KBUILD_OUTPUT_SUPPORT))),$(MTK_ROOT_OUT)/KERNEL_OBJ,$(KERNEL_WD))/include/mach/dfo_boot_default.h
@@ -295,11 +323,6 @@ endif
 endif
 ifeq ($(filter generic banyan_addon banyan_addon_x86,$(PROJECT)),)
   MTK_DEPENDENCY_PREGEN_BEFORE_ANDROID   := codegen ptgen
-  ifneq ($(MTK_SKIP_KERNEL_IN_ANDROID),yes)
-     MTK_DEPENDENCY_PREGEN_BEFORE_ANDROID   += nandgen
-     MTK_DEPENDENCY_PREGEN_BEFORE_ANDROID   += $(if $(filter yes,$(strip $(KBUILD_OUTPUT_SUPPORT))),$(MTK_ROOT_OUT)/KERNEL_OBJ,$(KERNEL_WD))/include/mach/dfo_boot.h \
-                       			    $(if $(filter yes,$(strip $(KBUILD_OUTPUT_SUPPORT))),$(MTK_ROOT_OUT)/KERNEL_OBJ,$(KERNEL_WD))/include/mach/dfo_boot_default.h
-  endif
 else
   MTK_DEPENDENCY_PREGEN_BEFORE_ANDROID   :=
 endif
@@ -379,7 +402,6 @@ endif
 ifneq ($(filter cleanall,$(MAKECMDGOALS)),)
 else
 # We still need ProjectConfig.mk after cleanall in new
-	$(hide) if [ -e $(dir $(PRJ_MF)) ]; then chmod u+w $(dir $(PRJ_MF)); else mkdir -p $(dir $(PRJ_MF)); fi
 	$(hide) make MTK_CUSTGEN_ERROR=no -f mediatek/build/custgen.mk $(PRJ_MF) $(DEAL_STDOUT_CUSTGEN)
 endif
 
@@ -879,15 +901,6 @@ android: clean-preprocessed
 android: run-preprocess
   endif
 endif
-
-ifneq ($(strip $(MTK_SKIP_KERNEL_IN_ANDROID)), yes)
-  ifeq ($(filter generic banyan_addon banyan_addon_x86,$(PROJECT)),)
-    ifeq ($(ACTION),)
-android: kernel
-    endif
-  endif
-endif
-
 android: CHECK_IMAGE := $(ANDROID_TARGET_IMAGES)
 android:
 ifeq ($(ACTION), )
@@ -905,16 +918,10 @@ else
 	$(hide) echo $(SHOWTIME) $(SHOWBUILD)ing $@...
 	$(hide) echo -e \\t\\t\\t\\b\\b\\b\\bLOG: $(S_MODULE_LOG)
 	$(hide) rm -f $(MODULE_LOG) $(MODULE_LOG)_err
- ifeq ($(ACTION),clean)
-	$(hide) ($(MAKECMD) $(ACTION) $(DEAL_STDOUT_CLEAN);exit $${PIPESTATUS[0]}) && \
-		$(SHOWRSLT) $${PIPESTATUS[0]} $(S_CLEAN_LOG) $(ACTION) || \
-		$(SHOWRSLT) $${PIPESTATUS[0]} $(S_CLEAN_LOG) $(ACTION)
-  else
 	$(hide) ($(MAKECMD) $(ACTION) $(DEAL_STDOUT);exit $${PIPESTATUS[0]}) && \
-	$(if $(filter clean,$(ACTION)),,$(call chkImgSize,$(ACTION),$(PROJECT),$(SCATTER_FILE),$(if $(strip $(ACTION)),$(CHECK_IMAGE),$(ANDROID_IMAGES)),$(DEAL_STDOUT),&&)) \
-	         $(SHOWRSLT) $${PIPESTATUS[0]} $(MODULE_LOG) $(ACTION) || \
-		 $(SHOWRSLT) $${PIPESTATUS[0]} $(MODULE_LOG) $(ACTION)
-endif
+	  $(call chkImgSize,$(ACTION),$(PROJECT),$(SCATTER_FILE),$(if $(strip $(ACTION)),$(CHECK_IMAGE),$(ANDROID_IMAGES)),$(DEAL_STDOUT),&&) \
+	  $(SHOWRSLT) $${PIPESTATUS[0]} $(MODULE_LOG) $(ACTION) || \
+	  $(SHOWRSLT) $${PIPESTATUS[0]} $(MODULE_LOG) $(ACTION)
 endif
 
 

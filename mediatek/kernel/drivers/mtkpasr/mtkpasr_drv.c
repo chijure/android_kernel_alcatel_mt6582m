@@ -99,7 +99,7 @@ extern int mtkpasr_isolate_page(struct page *page);
 /* Drop pages in file/anon lrus! */
 extern int mtkpasr_drop_page(struct page *page);
 
-#define MTKPASR_EXHAUSTED	((low_wmark_pages(MTKPASR_ZONE) + pageblock_nr_pages - 1) >> pageblock_order)
+#define MTKPASR_EXHAUSTED	(low_wmark_pages(MTKPASR_ZONE) + pageblock_nr_pages)
 /* Show mem banks */
 int mtkpasr_show_banks(char *buf)
 {
@@ -805,30 +805,24 @@ static void remove_bank_from_buddy(int bank)
 #endif
 }
 
-static bool mtkpasr_no_exhausted(void)
+static bool mtkpasr_no_exhausted(int request_order)
 {
-	int order = MAX_ORDER - 1;
-	unsigned long free = 0, exhausted_level = MTKPASR_EXHAUSTED;
-	struct free_area *area;
-	
-	for (; order >= 0; --order) {
-		/* Go through MTKPASR range */
-		area = &(MTKPASR_ZONE->free_area[order]);
-		free += area->nr_free;
-		/* Early check for whether it is exhausted */
-		if (free > exhausted_level) {
-			return true;
+	long free, exhausted_level = MTKPASR_EXHAUSTED;
+	int order;
+
+	free = zone_page_state(MTKPASR_ZONE, NR_FREE_PAGES);
+	if (request_order > 0) {
+		for (order = 0; order < request_order; ++order) {
+			free -= MTKPASR_ZONE->free_area[order].nr_free << order;
 		}
-		/* Shift order */
-		free <<= 1;
-		exhausted_level <<= 1;
+		exhausted_level >>= order;
 	}
 
-	return false;
+	return (free >= exhausted_level);
 }
 
 /* Early path to release mtkpasr reserved pages */
-void try_to_release_mtkpasr_page(void)
+void try_to_release_mtkpasr_page(int request_order)
 {
 	int current_bank = 0;
 	struct list_head *mafl = NULL;
@@ -849,7 +843,7 @@ void try_to_release_mtkpasr_page(void)
 	}
 
 	/* Test whether mtkpasr is under suitable level */
-	if (mtkpasr_no_exhausted()) {
+	if (mtkpasr_no_exhausted(request_order)) {
 		return;
 	}
 
